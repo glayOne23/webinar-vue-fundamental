@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue</title>
+
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+
+</head>
+<body>
+    <div id="app">
+        <div class="lg:grid lg:grid-cols-3 text-gray-700">        
+            <aside class="p-10 lg:h-screen">
+                <h1 class="text-xl font-bold mb-5 text-center">Cari Kata Video YouTube</h1>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2" for="youtube_url">YouTube video URL</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="youtube_url" type="text" v-model="url" placeholder="Url">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2" for="search_key">Keyword</label>
+                    <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline mb-3" id="search_key" type="text" v-model="kataKunci" placeholder="Keyword">
+                    <button class="bg-gray-700 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded" @click="bersihkan">Clear</button>
+                </div>                
+
+                <div class="inline-flex">
+                    <button @click="ketikaPertamaDiKlik" :disabled="!paginasi.first" :class="!paginasi.first ? stylePaginasi.disabled : stylePaginasi.enabled">
+                        First
+                    </button>
+                    <button @click="ketikaSebelumnyaDiKlik" :disabled="!paginasi.prev" :class="!paginasi.prev ? stylePaginasi.disabled : stylePaginasi.enabled">
+                        Prev
+                    </button>
+                    <button @click="ketikaSelanjutnyaDiKlik" :disabled="!paginasi.next" :class="!paginasi.next ? stylePaginasi.disabled : stylePaginasi.enabled">
+                        Next
+                    </button>
+                    <button @click="ketikaTerakhirDiKlik" :disabled="!paginasi.last" :class="!paginasi.last ? stylePaginasi.disabled : stylePaginasi.enabled">
+                        Last
+                    </button>
+                </div>
+        
+                <div class="my-4 text-l font-bold">
+                    <p>Total Hasil : {{paginasi.total}}</p>                    
+                </div>
+        
+                <div class="my-4 text-l font-bold">
+                    <p>Halaman Ke : {{paginasi.page}}</p>                    
+                </div>
+            </aside>
+    
+            <main class="p-10 text-white bg-gray-700 lg:col-span-2">
+                <h2 class="text-xl font-bold mb-5">
+                    Kata Ditemukan  :
+                </h2>
+                <div v-if="paginasi.total == 0" class="text-center mt-10">
+                    <img class="inline-flex w-48 mb-4" src="./search.svg" alt="">
+                    <p>Tidak ada kata ditemukan.</p>
+                </div>
+                <ul class="daftar">
+                    <li v-for="(hasil, index) in daftarHasil" :key="index" class="mb-2"> 
+                        <a :href="url + '&t=' + hasil.start + 's' " target="_blank">
+                            <button class="bg-gray-500 hover:bg-gray-600 text-white py-1 px-2 rounded">                                    
+                                Link Youtube
+                            </button>                    
+                        </a>                        
+                        <p class="inline" v-html="hasil.text"></p>                         
+                    </li>
+                </ul>
+        
+                <!-- <div class="">
+                    <pre>{{ jadikanStringPaginasi }}</pre>
+                </div>
+        
+                <div class="">
+                    <pre>{{ jadikanStringDaftarHasil }}</pre>
+                </div> -->
+            </main>          
+        </div>        
+    </div>
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="./dbounce.js"></script>
+<script>
+    new Vue({
+        el : '#app',
+        data: {
+            url : 'https://www.youtube.com/watch?v=klnvttPfOUM&q=webdev',
+            url2 : 'https://www.youtube.com/embed/klnvttPfOUM',
+            kataKunci : '',
+            daftarHasil : [],
+            paginasi : {
+                first : null,
+                last : null,
+                prev : null,
+                next : null,
+                total : 0,
+                page : null
+            },
+            stylePaginasi : {
+                enabled : 'bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4',
+                disabled : 'cursor-not-allowed opacity-75 bg-gray-300 text-gray-800 font-bold py-2 px-4',
+            },
+        },
+        watch :{
+            // kataKunci(kataKunci){
+            //     console.log(kataKunci);
+            // }
+            kataKunci:pDebounce( function kataKunci (kataKunci) {
+                this.cari(kataKunci, this.url)
+            }, 250)
+        },
+
+        methods : {
+            async cari(kataKunci, url, paginasi){                
+                let urlApi = `https://cari-teks-video-api.vercel.app/api/search?q=${kataKunci}&url=${encodeURIComponent(url)}`
+                if (paginasi) {
+                    urlApi = paginasi
+                }
+                const result = await fetch(urlApi)
+                .then( response => {
+                    if (response.ok) {
+                        return response.json()
+                    }
+                    return []
+                })
+                this.daftarHasil = result.data;
+                this.paginasi.first = result.first
+                this.paginasi.last = result.last
+                this.paginasi.prev = result.prev
+                this.paginasi.next = result.next
+                this.paginasi.total = result.total
+                this.paginasi.page = result.page
+            },            
+            ketikaPertamaDiKlik(){
+                this.cari(this.kataKunci, this.url, this.paginasi.first)
+            },
+            ketikaSebelumnyaDiKlik(){   
+                this.cari(this.kataKunci, this.url, this.paginasi.prev)
+            },
+            ketikaSelanjutnyaDiKlik(){
+                this.cari(this.kataKunci, this.url, this.paginasi.next)
+            },
+            ketikaTerakhirDiKlik(){
+                this.cari(this.kataKunci, this.url, this.paginasi.last)
+            },
+            bersihkan() {
+                this.kataKunci = ''
+                this.bersihkanHasilDanPaginasi()
+            },
+            bersihkanHasilDanPaginasi() {
+                this.daftarHasil = []
+                this.paginasi = {
+                first: null,
+                last: null,
+                prev: null,
+                next: null,
+                total: 0,
+                page: null
+                }
+            }
+        },
+
+        computed : {
+            jadikanStringPaginasi() {                
+                return JSON.stringify(this.paginasi, null, 2)                
+            },
+            jadikanStringDaftarHasil() {                
+                return JSON.stringify(this.daftarHasil, null, 2)                
+            },
+        } 
+
+
+
+    })
+</script>
+
+</html>
