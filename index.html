@@ -53,7 +53,7 @@
                 <h2 class="text-xl font-bold mb-5">
                     Kata Ditemukan  :
                 </h2>
-                <div v-if="paginasi.total == 0" class="text-center mt-10">
+                <div v-if="paginasi.total === 0" class="text-center mt-10">
                     <img class="inline-flex w-48 mb-4" src="./search.svg" alt="">
                     <p>Tidak ada kata ditemukan.</p>
                 </div>
@@ -85,7 +85,8 @@
 <script>
     new Vue({
         el : '#app',
-        data: {
+        
+        data : {
             url : 'https://www.youtube.com/watch?v=klnvttPfOUM&q=webdev',
             url2 : 'https://www.youtube.com/embed/klnvttPfOUM',
             kataKunci : '',
@@ -103,8 +104,9 @@
                 disabled : 'cursor-not-allowed opacity-75 bg-gray-300 text-gray-800 font-bold py-2 px-4',
             },
         },
-        watch :{
-            // kataKunci(kataKunci){
+
+        watch : {
+            // kataKunci(kataKunci) {
             //     console.log(kataKunci);
             // }
             kataKunci:pDebounce( function kataKunci (kataKunci) {
@@ -113,7 +115,7 @@
         },
 
         methods : {
-            async cari(kataKunci, url, paginasi){                
+            async cari(kataKunci, url, paginasi) {                
                 let urlApi = `https://cari-teks-video-api.vercel.app/api/search?q=${kataKunci}&url=${encodeURIComponent(url)}`
                 if (paginasi) {
                     urlApi = paginasi
@@ -133,16 +135,16 @@
                 this.paginasi.total = result.total
                 this.paginasi.page = result.page
             },            
-            ketikaPertamaDiKlik(){
+            ketikaPertamaDiKlik() {
                 this.cari(this.kataKunci, this.url, this.paginasi.first)
             },
-            ketikaSebelumnyaDiKlik(){   
+            ketikaSebelumnyaDiKlik() {   
                 this.cari(this.kataKunci, this.url, this.paginasi.prev)
             },
-            ketikaSelanjutnyaDiKlik(){
+            ketikaSelanjutnyaDiKlik() {
                 this.cari(this.kataKunci, this.url, this.paginasi.next)
             },
-            ketikaTerakhirDiKlik(){
+            ketikaTerakhirDiKlik() {
                 this.cari(this.kataKunci, this.url, this.paginasi.last)
             },
             bersihkan() {
@@ -170,8 +172,6 @@
                 return JSON.stringify(this.daftarHasil, null, 2)                
             },
         } 
-
-
 
     })
 </script>
